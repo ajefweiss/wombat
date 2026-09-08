@@ -934,7 +934,9 @@ class ParamWindow(QMainWindow):
                 aPW.scatters[idx].setData([])
             # Turn off this arrow in the overview window    
             if type(ovw) != type(None):
-                ovw.arrows[idx].setStyle(angle=0, headWidth=0, headLen=0, tailLen=0, tailWidth=0, pxMode=False,  pen={'color': color, 'width': 0}, brush=color)    
+                color='k'
+                ovw.arrows[idx].setStyle(angle=0, headWidth=0, headLen=0, tailLen=0, tailWidth=0, pxMode=False,  pen={'color': color, 'width': 0}, brush=color)  
+                ovw.wfScats[idx].setData([],[])
         
         # |---------------------------------------|
         # |------- Switching existing type -------| 
@@ -1026,6 +1028,8 @@ class ParamWindow(QMainWindow):
             # need to do background too bc it can get cleaned
             aPW.plotBackground()
             aPW.plotWFs(justN=idx)
+            if ovw:
+                ovw.updateArrow(idx,color=wfs[idx].WFcolor)
             
     def back_changed(self,text, doItAll=False, justSat=None):
         """
@@ -1494,7 +1498,8 @@ class ParamWindow(QMainWindow):
             wfs[i].WFcolor = color.name()
             if not self.holdIt:            
                 for ipw in range(nSats):
-                    pws[ipw].plotWFs(justN=wfs[i].WFidx-1)
+                    if type(wfs[i].WFtype) != type(None): 
+                        pws[ipw].plotWFs(justN=wfs[i].WFidx-1)
     
     def btnstate(self,b, isMain=False):
         """
@@ -3306,8 +3311,22 @@ def buildMegaVars(rD, tlabs, tmaps, satNames):
         myMatch = np.where(firstdelts == np.min(firstdelts))[0][0]
         mainwindow.update_tidx(myMatch+2, myId=0)
         # Set each parameter panel (time and params) 
+        tempWFnames = np.copy(wfs)
+        
         for i in range(nwfs):
-            aWF = wfs[i]
+            # need to find which tag has i in it
+            foundIt = -9999
+            for j in range(len(tempWFnames)):
+                if str(i+1) in tempWFnames[j]:
+                    foundIt = j
+            if foundIt != -9999:
+                aWF = tempWFnames[foundIt]
+                tempWFnames = np.delete(tempWFnames, foundIt)
+            if type(aWF) == type(None):
+                aWF = tempWFnames[0]
+                tempWFnames = tempWFnames[1:]
+                
+            #aWF = wfs[i]
             WFid = WFname2id[aWF[:-1]]
             mainwindow.cbs[i].setCurrentIndex(WFid)
             for j in range(len(paramLog[aWF])):
