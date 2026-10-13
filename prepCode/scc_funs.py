@@ -1051,7 +1051,14 @@ def rebinIDL(arr, new_shape):
 
     """    
     factors = arr.shape // new_shape
-    outarr = arr.reshape(new_shape[0], factors[0], new_shape[1], factors[1]).mean(3).mean(1)
+    try:
+        outarr = arr.reshape(new_shape[0], factors[0], new_shape[1], factors[1]).mean(3).mean(1)
+    except:
+        # Might have smaller array, need to resize to bigger instead
+        factors = np.array(new_shape) // np.array(arr.shape)
+        block = np.ones((factors[0], factors[1]))
+        outarr = np.kron(arr, block)
+        
     return outarr
     
 #|------------------------|
